@@ -12,7 +12,7 @@ namespace lotto
 /*
  * Base class template for event selector
  */
-template <typename EventIDType, typename RateCalculatorType>
+template <typename EventIDType, typename RateCalculatorType, typename EngineType>
 class EventSelectorBase
 {
 public:
@@ -25,14 +25,20 @@ protected:
     // Pointer to rate calculator
     const std::shared_ptr<RateCalculatorType> rate_calculator_ptr;
 
-    // TODO: Maybe take generator as shared_ptr if using multiple selectors at once
     // Random number generator
-    RandomGenerator random_generator;
+    std::shared_ptr<RandomGeneratorT<EngineType>> random_generator;
 
     // Constructor for use in derived classes
-    EventSelectorBase(const std::shared_ptr<RateCalculatorType>& rate_calculator_ptr)
-        : rate_calculator_ptr(rate_calculator_ptr)
+    EventSelectorBase(
+        const std::shared_ptr<RateCalculatorType>& rate_calculator_ptr,
+        std::shared_ptr<RandomGeneratorT<EngineType>> random_generator =
+            std::make_shared<RandomGeneratorT<EngineType>>())
+        : rate_calculator_ptr(rate_calculator_ptr),
+          random_generator(random_generator)
     {
+        if (this->random_generator == nullptr) {
+            this->random_generator = std::make_shared<RandomGeneratorT<EngineType>>();
+        }
     }
 
     // Returns the rate given an event ID
@@ -59,12 +65,12 @@ protected:
     double calculate_time_step(double total_rate)
     {
         assert(total_rate > 0.0); // should be positive, avoid divide-by-zero
-        double time_step = -std::log(random_generator.sample_unit_interval()) / total_rate;
+        double time_step = -std::log(random_generator->sample_unit_interval()) / total_rate;
         return time_step;
     }
 
     // Reseeds the generator
-    void reseed_generator(UIntType new_seed) { random_generator.reseed_generator(new_seed); }
+    void reseed_generator(UIntType new_seed) { random_generator->reseed_generator(new_seed); }
 };
 } // namespace lotto
 #endif

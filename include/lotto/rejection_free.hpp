@@ -18,15 +18,18 @@ namespace lotto
 /*
  * Event selector implemented using rejection-free KMC algorithm
  */
-template <typename EventIDType, typename RateCalculatorType>
-class RejectionFreeEventSelector : public EventSelectorBase<EventIDType, RateCalculatorType>
+template <typename EventIDType, typename RateCalculatorType, typename EngineType = std::mt19937_64>
+class RejectionFreeEventSelector : public EventSelectorBase<EventIDType, RateCalculatorType, EngineType>
 {
 public:
-    // Construct given a rate calculator, event ID list, and impact table
+    // Construct given a rate calculator, event ID list, impact table, and random number generator
     RejectionFreeEventSelector(const std::shared_ptr<RateCalculatorType>& rate_calculator_ptr,
                                const std::vector<EventIDType>& event_id_list,
-                               const std::map<EventIDType, std::vector<EventIDType>>& impact_table)
-        : EventSelectorBase<EventIDType, RateCalculatorType>(rate_calculator_ptr),
+                               const std::map<EventIDType, std::vector<EventIDType>>& impact_table,
+                               std::shared_ptr<RandomGeneratorT<EngineType>> random_generator =
+                                   std::shared_ptr<RandomGeneratorT<EngineType>>())
+        : EventSelectorBase<EventIDType, RateCalculatorType, EngineType>(
+              rate_calculator_ptr, random_generator),
           event_rate_tree(event_id_list, this->calculate_rates(event_id_list)),
           impact_table(fill_impact_table(impact_table, event_id_list)),
           impacted_events_ptr(nullptr)
@@ -49,7 +52,7 @@ public:
         double time_step = this->calculate_time_step(total_rate);
 
         // Query tree to select event
-        double query_value = total_rate * this->random_generator.sample_unit_interval();
+        double query_value = total_rate * this->random_generator->sample_unit_interval();
         EventIDType selected_event_id = event_rate_tree.query_tree(query_value);
 
         // Update impacted event list and return

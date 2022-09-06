@@ -13,14 +13,17 @@ namespace lotto
 /*
  * Event selector implemented using rejection KMC algorithm
  */
-template <typename EventIDType, typename RateCalculatorType>
-class RejectionEventSelector : public EventSelectorBase<EventIDType, RateCalculatorType>
+template <typename EventIDType, typename RateCalculatorType, typename EngineType = std::mt19937_64>
+class RejectionEventSelector : public EventSelectorBase<EventIDType, RateCalculatorType, EngineType>
 {
 public:
     RejectionEventSelector(const std::shared_ptr<RateCalculatorType>& rate_calculator_ptr,
                            double rate_upper_bound,
-                           const std::vector<EventIDType>& event_id_list)
-        : EventSelectorBase<EventIDType, RateCalculatorType>(rate_calculator_ptr),
+                           const std::vector<EventIDType>& event_id_list,
+                           std::shared_ptr<RandomGeneratorT<EngineType>> random_generator =
+                               std::shared_ptr<RandomGeneratorT<EngineType>>())
+        : EventSelectorBase<EventIDType, RateCalculatorType, EngineType>(
+              rate_calculator_ptr, random_generator),
           rate_upper_bound(rate_upper_bound),
           event_id_list(event_id_list)
     {
@@ -47,10 +50,10 @@ public:
         while (true)
         {
             accumulated_time_step += this->calculate_time_step(total_rate);
-            EventIDType candidate_event_id = event_id_list[this->random_generator.sample_integer_range(event_id_list.size() - 1)];
+            EventIDType candidate_event_id = event_id_list[this->random_generator->sample_integer_range(event_id_list.size() - 1)];
             double rate = this->calculate_rate(candidate_event_id);
             assert(rate <= rate_upper_bound); // rate cannot exceed upper bound
-            if (rate / rate_upper_bound >= this->random_generator.sample_unit_interval())
+            if (rate / rate_upper_bound >= this->random_generator->sample_unit_interval())
             {
                 selected_event_id = candidate_event_id;
                 break;

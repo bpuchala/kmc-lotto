@@ -16,7 +16,7 @@ template <typename NodeType>
 InvertedBinaryTreeNode<NodeType>::InvertedBinaryTreeNode(Node* left_node_ptr,
                                                          Node* right_node_ptr,
                                                          const NodeType& init_data)
-    : parent(nullptr), left_child(left_node_ptr), right_child(right_node_ptr), data(init_data)
+    : data(init_data), left_child(left_node_ptr), right_child(right_node_ptr), parent(nullptr)
 {
 }
 
@@ -224,10 +224,9 @@ InvertedBinarySumTree<NodeType>::_multi_join(std::vector<Node*>& current_parent_
     }
 
     // Grab two elements at a time, and join them into a parent node
-    for (int i = 0; i < current_parent_nodes.size(); ++i)
+    for (int i = 0; i < current_parent_nodes.size(); i += 2)
     {
         new_parent_nodes.push_back(this->_join(current_parent_nodes[i], current_parent_nodes[i + 1]));
-        i++;
     }
 
     return new_parent_nodes;
