@@ -48,16 +48,21 @@ public:
         update_impacted_event_rates();
 
         // Rates should now be updated. Calculate total rate and time step
-        double total_rate = event_rate_tree.total_rate();
-        double time_step = this->calculate_time_step(total_rate);
+        double _total_rate = event_rate_tree.total_rate();
+        double time_step = this->calculate_time_step(_total_rate);
 
         // Query tree to select event
-        double query_value = total_rate * this->random_generator->sample_unit_interval();
+        double query_value = _total_rate * this->random_generator->sample_unit_interval();
         EventIDType selected_event_id = event_rate_tree.query_tree(query_value);
 
         // Update impacted event list and return
         set_impacted_events(selected_event_id);
         return std::make_pair(selected_event_id, time_step);
+    }
+
+    // Return total event rate, for events in the state before `select_event` is called
+    double total_rate() const {
+      return event_rate_tree.total_rate();
     }
 
 private:
