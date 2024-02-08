@@ -23,7 +23,7 @@ There are also tests included to make sure things are working properly. To compi
 ```bash
 mkdir build_tests
 cd build_tests
-cmake -DCMAKE_BUILD_TYPE=Release ../tests
+cmake -DCMAKE_BUILD_TYPE=Release -DKMCLOTTO_PREFIX=$HOME/.local ../tests
 make
 make test
 ```
