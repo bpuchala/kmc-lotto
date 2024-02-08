@@ -41,6 +41,14 @@ target_compile_options(gtest_all
 )
 
 ### kmc-lotto ###
+
+if(NOT DEFINED KMCLOTTO_PREFIX)
+  message(STATUS "KMCLOTTO_PREFIX not defined")
+endif()
+if(DEFINED KMCLOTTO_PREFIX)
+  set(kmc_lotto_ROOT ${KMCLOTTO_PREFIX}/share/kmc_lotto/cmake)
+endif()
+
 find_package(kmc_lotto)
 if(NOT kmc_lotto_FOUND)
   message(FATAL_ERROR "CMake failed to find kmc-lotto")
