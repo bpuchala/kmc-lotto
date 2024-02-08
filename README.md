@@ -50,3 +50,7 @@ Once constructed, calling an event selector's `select_event` method will select 
 Note that the rejection event selector will repeatedly attempt to select until an event is accepted.
 
 For an example of kmc-lotto in action, see [apb-kmc](https://github.com/jonaskaufman/apb-kmc) and [libcasm-clexmonte](https://github.com/prisms-center/CASMcode_clexmonte).
+
+## Development
+
+- Format using `clang-format -style=google`, which can be done using the provided `stylize.sh` file for staged changes

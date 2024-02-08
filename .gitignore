@@ -44,3 +44,4 @@ configure.ac
 
 # Other
 .ycm_extra_conf.py
+.is_stylized.txt

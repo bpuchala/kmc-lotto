@@ -12,6 +12,7 @@ Changes are described beginning from https://github.com/jonaskaufman/kmc-lotto/c
 
 ### Changed
 
+- Style with `clang-format -style=google`
 - Change build to use cmake
 - Add EngineType template parameter, with default value std::mt19937_64, to lotto::EventSelectorBase and derived classes
 - Make lotto::EventSelectorBase::random_generator a shared_ptr
