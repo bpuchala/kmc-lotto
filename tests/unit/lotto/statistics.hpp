@@ -54,7 +54,7 @@ void check_samples_from_uniform_distribution(T min_value, T max_value, std::vect
 /// Checks that samples satisfy bounds and expected mean for an inverse log distribution
 //  a*ln(1/x), where x is uniformly distributed between 0 and 1,
 //  which has mean and standard deviation a
-void check_samples_from_log_inverse_distribution(double a, std::vector<double> samples)
+inline void check_samples_from_log_inverse_distribution(double a, std::vector<double> samples)
 {
     // Check min (a must be positive)
     ASSERT_GT(a, 0.0);

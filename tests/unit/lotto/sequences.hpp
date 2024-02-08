@@ -5,10 +5,10 @@
 #include <vector>
 
 // Dumb hash function to produce nonconsecutive values
-int hash_int(int input) { return input * 7; }
+inline int hash_int(int input) { return input * 7; }
 
 // Generate an integer sequence of a given length
-std::vector<int> hashed_sequence(int length)
+inline std::vector<int> hashed_sequence(int length)
 {
     std::set<int> sequence;
     int i = 0;

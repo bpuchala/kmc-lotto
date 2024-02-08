@@ -211,9 +211,3 @@ TEST_F(EventRateTreeTest, EdgeQuery)
         EXPECT_EQ(i, result_leaf_ix);
     }
 }
-
-int main(int argc, char** argv)
-{
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}

@@ -97,9 +97,3 @@ TEST_F(RejectionEventSelectorTest, AverageTimeStep)
         check_samples_from_log_inverse_distribution(1.0 / (event_id_list.size() * r0), time_step_samples);
     }
 }
-
-int main(int argc, char** argv)
-{
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}

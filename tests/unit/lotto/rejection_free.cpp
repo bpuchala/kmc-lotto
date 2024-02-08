@@ -155,9 +155,3 @@ TEST_F(RejectionFreeEventSelectorTest, EvenOddEventSelection)
         EXPECT_EQ(selected_event_id % 2, 1);
     }
 }
-
-int main(int argc, char** argv)
-{
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}

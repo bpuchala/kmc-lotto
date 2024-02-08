@@ -4,25 +4,28 @@
 kmc-lotto is a simple C++ library that performs event selection for arbitrary kinetic Monte Carlo (KMC) simulations.
 
 This project is developed by the [Van der Ven group](https://labs.materials.ucsb.edu/vanderven/anton/) in the Materials Department at the University of California, Santa Barbara.
-The repository is written and maintained by me, Jonas Kaufman.
-[Dr. John Goiri](https://github.com/goirijo/) implemented the binary tree used for rejection-free event selection (and suggested the name "lotto") and [Dr. Sanjeev Kolli](https://github.com/skk74) provided guidance during development.
+The repository was originally written by Jonas Kaufman.
+[Dr. John Goiri](https://github.com/goirijo/) implemented the binary tree used for rejection-free event selection (and suggested the name "lotto") and [Dr. Sanjeev Kolli](https://github.com/skk74) provided guidance during development. [Brian Puchala](https://github.com/bpuchala) modified the event selector to allow using a shared random number engine and switched the build system to CMake.
 
 ## Installation
 kmc-lotto is a header-only template library, so it does not need to be compiled on its own.
 You may find it convenient to access the headers by including kmc-lotto as a submodule in your program's repository.
 
-You may also use autotools to install the headers in a specific location. To install under `$HOME/.local` (substitute this with your location of choice), run:
-```bash
-./boostrap.sh
-./configure --prefix=$HOME/.local
-make install
-```
-
-There are also tests included to make sure things are working properly. To compile and run the tests, run the configure step above and then:
+You may also use cmake to install the headers in a specific location. To install under `$HOME/.local` (substitute this with your location of choice), run:
 ```bash
 mkdir build
 cd build
-make check
+cmake -DCMAKE_INSTALL_PREFIX=$HOME/.local ..
+make install
+```
+
+There are also tests included to make sure things are working properly. To compile and run the tests, install the library as above and then:
+```bash
+mkdir build_tests
+cd build_tests
+cmake -DCMAKE_BUILD_TYPE=Release ../tests
+make
+make test
 ```
 
 Note that a compiler with C++17 support is needed to compile code that uses kmc-lotto, including the tests.
@@ -46,4 +49,4 @@ To construct an event selector object:
 Once constructed, calling an event selector's `select_event` method will select the next event, returning its ID and the time step for that selection (in units inverse to those of your event rates).
 Note that the rejection event selector will repeatedly attempt to select until an event is accepted.
 
-For an example of kmc-lotto in action, see [apb-kmc](https://github.com/jonaskaufman/apb-kmc).
+For an example of kmc-lotto in action, see [apb-kmc](https://github.com/jonaskaufman/apb-kmc) and [libcasm-clexmonte](https://github.com/prisms-center/CASMcode_clexmonte).

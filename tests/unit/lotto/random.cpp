@@ -143,9 +143,3 @@ TEST_F(RandomGeneratorT_Test, UnitIntervalSamples)
     }
     check_samples_from_uniform_distribution(min_value, max_value, samples);
 }
-
-int main(int argc, char** argv)
-{
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
-}
