@@ -104,7 +104,7 @@ TEST_F(RejectionFreeEventSelectorTest, CorrectEventSelection) {
 TEST_F(RejectionFreeEventSelectorTest, GetRate) {
   one_hot_calculator_ptr->set_hot_id(event_ids[2]);
   for (const ID& id : event_ids) {
-    double rate = one_hot_calculator_ptr->get_rate(id);
+    double rate = one_hot_selector_ptr->get_rate(id);
     if (id == event_ids[2]) {
       EXPECT_EQ(rate, 1.0);
     } else {
