@@ -70,6 +70,9 @@ class EventRateTree {
   // Return the total rate of all events stored in tree
   double total_rate() const;
 
+  // Get the rate of a specific event
+  double get_rate(const EventIDType &event_id) const;
+
  private:
   using NodeData = EventRateNodeData<EventIDType>;
   using Node = InvertedBinaryTreeNode<NodeData>;

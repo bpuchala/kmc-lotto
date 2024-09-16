@@ -86,6 +86,14 @@ double EventRateTree<EventIDType>::total_rate() const {
   return event_rate_tree.root()->data.get_rate();
 }
 
+// Get the rate of a specific event
+template <typename EventIDType>
+double EventRateTree<EventIDType>::get_rate(const EventIDType &event_id) const {
+  auto leaf_ix = event_to_leaf_index.at(event_id);
+  NodeData &event_data = event_rate_tree.leaves()[leaf_ix]->data;
+  return event_data.get_rate();
+}
+
 template <typename EventIDType>
 std::map<EventIDType, Index>
 EventRateTree<EventIDType>::event_to_leaf_index_map() const {

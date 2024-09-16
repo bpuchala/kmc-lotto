@@ -66,6 +66,11 @@ class RejectionFreeEventSelector
   // called
   double total_rate() const { return event_rate_tree.total_rate(); }
 
+  // Get the rate of a specific event
+  double get_rate(const EventIDType &event_id) const {
+    return event_rate_tree.get_rate(event_id);
+  }
+
  private:
   // Tree storing event IDs and their corresponding rates
   EventRateTree<EventIDType> event_rate_tree;
