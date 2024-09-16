@@ -101,6 +101,29 @@ TEST_F(RejectionFreeEventSelectorTest, CorrectEventSelection) {
   }
 }
 
+TEST_F(RejectionFreeEventSelectorTest, GetRate) {
+  one_hot_calculator_ptr->set_hot_id(event_ids[2]);
+
+  std::map<ID, std::vector<ID>> neighbor_impact_table;
+  for (int i = 0; i < n_events; ++i) {
+    ID id = event_ids[i];
+    neighbor_impact_table[id] = {id, event_ids[(i + 1) % n_events]};
+  }
+
+  lotto::RejectionFreeEventSelector<ID, OneHotRateCalculator<ID>> selector =
+      lotto::RejectionFreeEventSelector<ID, OneHotRateCalculator<ID>>(
+          one_hot_calculator_ptr, event_ids, neighbor_impact_table);
+
+  for (const ID& id : event_ids) {
+    double rate = selector.get_rate(id);
+    if (id == event_ids[2]) {
+      EXPECT_EQ(rate, 1.0);
+    } else {
+      EXPECT_EQ(rate, 0.0);
+    }
+  }
+}
+
 TEST_F(RejectionFreeEventSelectorTest, EmptyImpactTable) {
   // Checks if event selection works with an empty impact table
   int n_samples = 100;
