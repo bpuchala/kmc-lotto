@@ -112,6 +112,10 @@ std::vector<EventRateNodeData<EventIDType> >
 EventRateTree<EventIDType>::events_as_leaves(
     const std::vector<EventIDType> &init_events,
     const std::vector<double> &init_rates) const {
+  if (init_events.empty()) {
+    throw std::runtime_error(
+        "Error in EventRateTree::events_as_leaves: no events.");
+  }
   std::vector<EventRateNodeData<EventIDType> > event_leaves;
   auto rate_it = init_rates.begin();
   for (auto event_it = init_events.begin(); event_it != init_events.end();
