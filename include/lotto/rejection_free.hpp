@@ -42,6 +42,9 @@ const std::vector<EventIDType> &_validate_event_id_list(
 
 /*
  * Event selector implemented using rejection-free KMC algorithm
+ * - For any EventIDType that can be used as a std::map key
+ * - Uses a binary sum tree (log complexity) constructed using std::map and
+ *   linked lists
  */
 template <typename EventIDType, typename RateCalculatorType,
           typename EngineType = std::mt19937_64,
@@ -115,6 +118,34 @@ class RejectionFreeEventSelector
     return std::make_pair(selected_event_id, time_step);
   }
 
+  // Select an event and return its ID and the time step
+  // - This version does not set the impacted events
+  std::pair<EventIDType, double> only_select_event() {
+    // Because this function only selects events and does not process them,
+    // it cannot update any rates impacted by the selected event until the next
+    // call.
+    update_impacted_event_rates();
+
+    // Rates should now be updated. Calculate total rate and time step
+    double _total_rate = event_rate_tree.total_rate();
+    double time_step = this->calculate_time_step(_total_rate);
+
+    // Query tree to select event
+    double query_value =
+        _total_rate * this->random_generator->sample_unit_interval();
+    EventIDType selected_event_id = event_rate_tree.query_tree(query_value);
+
+    return std::make_pair(selected_event_id, time_step);
+  }
+
+  // Set the impact events pointer based on an accepted event ID
+  void set_impacted_events(const EventIDType &accepted_event_id) {
+    assert(impacted_events_ptr ==
+           nullptr);  // pointer should be null before proceeding
+    impacted_events_ptr = &get_impact(accepted_event_id);
+    return;
+  }
+
   // Return total event rate, for events in the state before `select_event` is
   // called
   double total_rate() const { return event_rate_tree.total_rate(); }
@@ -138,14 +169,6 @@ class RejectionFreeEventSelector
 
   // Function object to get impacted events from the accepted event ID
   GetImpactType get_impact;
-
-  // Set the impact events pointer based on an accepted event ID
-  void set_impacted_events(const EventIDType &accepted_event_id) {
-    assert(impacted_events_ptr ==
-           nullptr);  // pointer should be null before proceeding
-    impacted_events_ptr = &get_impact(accepted_event_id);
-    return;
-  }
 
   // Update the stored rates for impacted events
   void update_impacted_event_rates() {
@@ -176,6 +199,7 @@ class RejectionFreeEventSelector
 /*
  * Event selector implemented using rejection-free KMC algorithm
  * - For integer EventIDType only
+ * - Uses a binary sum tree (log complexity) constructed using std::vector
  */
 template <typename EventIDType, typename RateCalculatorType,
           typename EngineType = std::mt19937_64,
@@ -253,6 +277,34 @@ class VectorRejectionFreeEventSelector
     // Update impacted event list and return
     set_impacted_events(selected_event_id);
     return std::make_pair(selected_event_id, time_step);
+  }
+
+  // Select an event and return its ID and the time step
+  // - This version does not set the impacted events
+  std::pair<EventIDType, double> only_select_event() {
+    // Because this function only selects events and does not process them,
+    // it cannot update any rates impacted by the selected event until the next
+    // call.
+    update_impacted_event_rates();
+
+    // Rates should now be updated. Calculate total rate and time step
+    double _total_rate = this->total_rate();
+    double time_step = this->calculate_time_step(_total_rate);
+
+    // Query tree to select event
+    double query_value =
+        _total_rate * this->random_generator->sample_unit_interval();
+    EventIDType selected_event_id = this->query_tree(query_value);
+
+    return std::make_pair(selected_event_id, time_step);
+  }
+
+  // Set the impact events pointer based on an accepted event ID
+  void set_impacted_events(const EventIDType &accepted_event_id) {
+    assert(impacted_events_ptr ==
+           nullptr);  // pointer should be null before proceeding
+    impacted_events_ptr = &get_impact(accepted_event_id);
+    return;
   }
 
   // Return total event rate, for events in the state before `select_event` is
@@ -343,14 +395,6 @@ class VectorRejectionFreeEventSelector
     return index;
   }
 
-  // Set the impact events pointer based on an accepted event ID
-  void set_impacted_events(const EventIDType &accepted_event_id) {
-    assert(impacted_events_ptr ==
-           nullptr);  // pointer should be null before proceeding
-    impacted_events_ptr = &get_impact(accepted_event_id);
-    return;
-  }
-
   // Update the stored rates for impacted events
   void update_impacted_event_rates() {
     if (impacted_events_ptr != nullptr) {
@@ -390,6 +434,171 @@ class VectorRejectionFreeEventSelector
         sum += event_rates[i][j];
       }
       // std::cout << "- level=" << i << " sum=" << sum << std::endl;
+    }
+    return;
+  }
+};
+
+/*
+ * Event selector implemented using rejection-free KMC algorithm
+ * - For integer EventIDType only
+ * - Uses a direct sum (linear complexity) of the event rates
+ */
+template <typename EventIDType, typename RateCalculatorType,
+          typename EngineType = std::mt19937_64,
+          typename GetImpactType = GetImpactFromTable<EventIDType>>
+class DirectSumRejectionFreeEventSelector
+    : public EventSelectorBase<EventIDType, RateCalculatorType, EngineType> {
+ public:
+  // Construct given a rate calculator, event ID list, get impact function, and
+  // random number generator
+  DirectSumRejectionFreeEventSelector(
+      const std::shared_ptr<RateCalculatorType> &rate_calculator_ptr,
+      std::size_t _event_list_size, GetImpactType get_impact_f,
+      std::shared_ptr<RandomGeneratorT<EngineType>> random_generator =
+          std::shared_ptr<RandomGeneratorT<EngineType>>())
+      : EventSelectorBase<EventIDType, RateCalculatorType, EngineType>(
+            rate_calculator_ptr, random_generator),
+        event_list_size(_event_list_size),
+        event_rates(event_list_size, 0.0),
+        cumulative_rate(event_list_size, 0.0),
+        impacted_events_ptr(nullptr),
+        get_impact(get_impact_f) {
+    if (event_list_size < 1) {
+      throw std::runtime_error("Event list size must not be less than 1.");
+    }
+
+    // Calculate rates:
+    for (std::size_t i = 0; i < event_list_size; ++i) {
+      event_rates[i] = rate_calculator_ptr->calculate_rate(i);
+    }
+
+    // Update cumulative rate:
+    update_cumulative_rate();
+  }
+
+  // Select an event and return its ID and the time step
+  std::pair<EventIDType, double> select_event() {
+    // Because this function only selects events and does not process them,
+    // it cannot update any rates impacted by the selected event until the next
+    // call.
+    update_impacted_event_rates();
+
+    // Rates should now be updated. Calculate total rate and time step
+    double _total_rate = this->total_rate();
+    double time_step = this->calculate_time_step(_total_rate);
+
+    // Query tree to select event
+    double query_value =
+        _total_rate * this->random_generator->sample_unit_interval();
+    EventIDType selected_event_id = this->query_list(query_value);
+
+    // Update impacted event list and return
+    set_impacted_events(selected_event_id);
+    return std::make_pair(selected_event_id, time_step);
+  }
+
+  // Select an event and return its ID and the time step
+  // - This version does not set the impacted events
+  std::pair<EventIDType, double> only_select_event() {
+    // Because this function only selects events and does not process them,
+    // it cannot update any rates impacted by the selected event until the next
+    // call.
+    update_impacted_event_rates();
+
+    // Rates should now be updated. Calculate total rate and time step
+    double _total_rate = this->total_rate();
+    double time_step = this->calculate_time_step(_total_rate);
+
+    // Query tree to select event
+    double query_value =
+        _total_rate * this->random_generator->sample_unit_interval();
+    EventIDType selected_event_id = this->query_list(query_value);
+
+    return std::make_pair(selected_event_id, time_step);
+  }
+
+  // Set the impact events pointer based on an accepted event ID
+  void set_impacted_events(const EventIDType &accepted_event_id) {
+    assert(impacted_events_ptr ==
+           nullptr);  // pointer should be null before proceeding
+    impacted_events_ptr = &get_impact(accepted_event_id);
+    return;
+  }
+
+  // Return total event rate, for events in the state before `select_event` is
+  // called
+  double total_rate() const { return cumulative_rate.back(); }
+
+  // Get the rate of a specific event
+  double get_rate(const EventIDType &event_id) const {
+    return event_rates[event_id];
+  }
+
+ private:
+  // Total number of events:
+  std::size_t event_list_size;
+
+  // Event rates:
+  std::vector<double> event_rates;
+
+  // Cumulative rate: sum of all rates up to and including event i
+  std::vector<double> cumulative_rate;
+
+  // Pointer to vector of impacted events whose rates have not been updated
+  mutable const std::vector<EventIDType> *impacted_events_ptr;
+
+  // Function object to get impacted events from the accepted event ID
+  GetImpactType get_impact;
+
+  // Update `event_rates` for a given event ID
+  void update(const EventIDType &event_id, double new_rate) {
+    event_rates[event_id] = new_rate;
+  }
+
+  // Query the cumulative_rate list to select an event.
+  //
+  // - The query value should be in the range (0, total_rate]
+  // - Select event i, such that R(i-1) < u <= R(i), where u is the query value
+  //   and R(i) is the cumulative rate of all events up to and including event
+  //   i.
+  //
+  std::size_t query_list(double query_value) const {
+    assert(query_value > 0.0);  // query value must be positive
+    assert(query_value <=
+           total_rate());  // query value cannot exceed total rate
+
+    for (std::size_t index = 0; index < event_rates.size(); ++index) {
+      if (query_value <= cumulative_rate[index]) {
+        return index;
+      }
+    }
+
+    // Should never reach this point
+    throw std::runtime_error(
+        "Error in query_tree: query value exceeds total rate.");
+  }
+
+  // Update the stored rates for impacted events
+  void update_impacted_event_rates() {
+    if (impacted_events_ptr != nullptr) {
+      for (const EventIDType &event_id : *impacted_events_ptr) {
+        this->update(event_id, this->calculate_rate(event_id));
+      }
+      // Update cumulative rate:
+      update_cumulative_rate();
+
+      impacted_events_ptr = nullptr;
+    }
+    return;
+  }
+
+  // Update the cumulative rate list
+  void update_cumulative_rate() {
+    double sum = 0.0;
+    for (std::size_t i = 0; i < event_list_size; ++i) {
+      sum += event_rates[i];
+      cumulative_rate[i] = sum;
     }
     return;
   }
