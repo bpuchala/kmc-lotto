@@ -33,9 +33,7 @@ template <typename EventIDType>
 const std::vector<EventIDType> &_validate_event_id_list(
     const std::vector<EventIDType> &event_id_list) {
   if (event_id_list.empty()) {
-    throw std::runtime_error(
-        "Error constructing RejectionFreeEventSelector: "
-        "Event list is empty.");
+    std::cerr << "Warning: Event list is empty." << std::endl;
   }
   return event_id_list;
 }
@@ -67,11 +65,8 @@ class RejectionFreeEventSelector
         impact_table(fill_impact_table(impact_table, event_id_list)),
         impacted_events_ptr(nullptr),
         get_impact(impact_table) {
-    if (event_id_list.empty()) {
-      throw std::runtime_error("Event ID list must not be empty.");
-    }
     if (event_rate_tree.total_rate() == 0.0) {
-      throw std::runtime_error("Total rate must be greater than zero.");
+      std::cerr << "Warning: Total rate is zero." << std::endl;
     }
   }
 
@@ -89,11 +84,8 @@ class RejectionFreeEventSelector
         impact_table(),
         impacted_events_ptr(nullptr),
         get_impact(get_impact_f) {
-    if (event_id_list.empty()) {
-      throw std::runtime_error("Event ID list must not be empty.");
-    }
     if (event_rate_tree.total_rate() == 0.0) {
-      throw std::runtime_error("Total rate must be greater than zero.");
+      std::cerr << "Warning: Total rate is zero." << std::endl;
     }
   }
 
@@ -219,10 +211,6 @@ class VectorRejectionFreeEventSelector
         event_list_size(_event_list_size),
         impacted_events_ptr(nullptr),
         get_impact(get_impact_f) {
-    if (event_list_size < 1) {
-      throw std::runtime_error("Event list size must not be less than 1.");
-    }
-
     // Construct `event_rates` data structure:
     std::size_t capacity = 1;
     event_rates.emplace_back(capacity, 0.0);
@@ -237,6 +225,11 @@ class VectorRejectionFreeEventSelector
     }
 
     // Sum rates:
+    if (event_list_size == 0) {
+      std::cerr << "Warning: Event list size is zero." << std::endl;
+      return;
+    }
+
     std::size_t curr_level = event_rates.size() - 2;
     while (true) {
       auto curr_level_it = event_rates[curr_level].begin();
@@ -464,8 +457,9 @@ class DirectSumRejectionFreeEventSelector
         cumulative_rate(event_list_size, 0.0),
         impacted_events_ptr(nullptr),
         get_impact(get_impact_f) {
-    if (event_list_size < 1) {
-      throw std::runtime_error("Event list size must not be less than 1.");
+    if (event_list_size == 0) {
+      std::cerr << "Warning: Event list size is zero." << std::endl;
+      return;
     }
 
     // Calculate rates:
