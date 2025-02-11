@@ -7,10 +7,10 @@
 #include "statistics.hpp"
 #include "test_parameters.hpp"
 
+typedef lotto::RandomGenerator::UIntType UIntType;
+
 class RandomGeneratorTest : public testing::Test {
  public:
-  typedef lotto::RandomGenerator::UIntType UIntType;
-
  protected:
   /// Random generator for testing
   lotto::RandomGenerator generator;
