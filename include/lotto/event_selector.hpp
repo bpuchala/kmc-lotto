@@ -16,6 +16,8 @@ template <typename EventIDType, typename RateCalculatorType,
           typename EngineType>
 class EventSelectorBase {
  public:
+  typedef typename EngineType::result_type UIntType;
+
   EventSelectorBase() = delete;
 
   // Selects a single event, returns the event ID and the time step

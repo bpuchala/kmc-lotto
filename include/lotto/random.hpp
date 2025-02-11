@@ -8,8 +8,6 @@
 #include <random>
 
 namespace lotto {
-using UIntType = std::uint_fast64_t;
-using RealType = double;
 
 /**
  * Random number generator
@@ -37,6 +35,9 @@ using RealType = double;
 template <typename EngineType = std::mt19937_64>
 class RandomGeneratorT {
  public:
+  typedef typename EngineType::result_type UIntType;
+  typedef double RealType;
+
   /// Constructor, automatically construct and seed from random device if
   /// engine is empty
   RandomGeneratorT(
