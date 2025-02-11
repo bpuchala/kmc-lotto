@@ -55,14 +55,14 @@ class RejectionFreeEventSelector
   RejectionFreeEventSelector(
       const std::shared_ptr<RateCalculatorType> &rate_calculator_ptr,
       const std::vector<EventIDType> &event_id_list,
-      const std::map<EventIDType, std::vector<EventIDType>> &impact_table,
+      const std::map<EventIDType, std::vector<EventIDType>> &_impact_table,
       std::shared_ptr<RandomGeneratorT<EngineType>> random_generator =
           std::shared_ptr<RandomGeneratorT<EngineType>>())
       : EventSelectorBase<EventIDType, RateCalculatorType, EngineType>(
             rate_calculator_ptr, random_generator),
         event_rate_tree(_validate_event_id_list(event_id_list),
                         this->calculate_rates(event_id_list)),
-        impact_table(fill_impact_table(impact_table, event_id_list)),
+        impact_table(fill_impact_table(_impact_table, event_id_list)),
         impacted_events_ptr(nullptr),
         get_impact(impact_table) {
     if (event_rate_tree.total_rate() == 0.0) {
