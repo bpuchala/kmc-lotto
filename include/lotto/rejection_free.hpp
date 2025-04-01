@@ -138,6 +138,26 @@ class RejectionFreeEventSelector
     return;
   }
 
+  // Get the vector of impacted events. This should only be called after
+  // `set_impacted_events` has been called.
+  const std::vector<EventIDType> &get_impacted_events() const {
+    if (impacted_events_ptr == nullptr) {
+      throw std::runtime_error("Error: No impacted events set.");
+    }
+    return *impacted_events_ptr;
+  }
+
+  // Update the stored rates for impacted events
+  void update_impacted_event_rates() {
+    if (impacted_events_ptr != nullptr) {
+      for (const EventIDType &event_id : *impacted_events_ptr) {
+        event_rate_tree.update_rate(event_id, this->calculate_rate(event_id));
+      }
+      impacted_events_ptr = nullptr;
+    }
+    return;
+  }
+
   // Return total event rate, for events in the state before `select_event` is
   // called
   double total_rate() const { return event_rate_tree.total_rate(); }
@@ -161,17 +181,6 @@ class RejectionFreeEventSelector
 
   // Function object to get impacted events from the accepted event ID
   GetImpactType get_impact;
-
-  // Update the stored rates for impacted events
-  void update_impacted_event_rates() {
-    if (impacted_events_ptr != nullptr) {
-      for (const EventIDType &event_id : *impacted_events_ptr) {
-        event_rate_tree.update_rate(event_id, this->calculate_rate(event_id));
-      }
-      impacted_events_ptr = nullptr;
-    }
-    return;
-  }
 
   // Add missing event IDs to an impact table (with empty vectors as values)
   // and return it
@@ -300,6 +309,26 @@ class VectorRejectionFreeEventSelector
     return;
   }
 
+  // Get the vector of impacted events. This should only be called after
+  // `set_impacted_events` has been called.
+  const std::vector<EventIDType> &get_impacted_events() const {
+    if (impacted_events_ptr == nullptr) {
+      throw std::runtime_error("Error: No impacted events set.");
+    }
+    return *impacted_events_ptr;
+  }
+
+  // Update the stored rates for impacted events
+  void update_impacted_event_rates() {
+    if (impacted_events_ptr != nullptr) {
+      for (const EventIDType &event_id : *impacted_events_ptr) {
+        this->update(event_id, this->calculate_rate(event_id));
+      }
+      impacted_events_ptr = nullptr;
+    }
+    return;
+  }
+
   // Return total event rate, for events in the state before `select_event` is
   // called
   double total_rate() const { return event_rates[0][0]; }
@@ -386,17 +415,6 @@ class VectorRejectionFreeEventSelector
       }
     }
     return index;
-  }
-
-  // Update the stored rates for impacted events
-  void update_impacted_event_rates() {
-    if (impacted_events_ptr != nullptr) {
-      for (const EventIDType &event_id : *impacted_events_ptr) {
-        this->update(event_id, this->calculate_rate(event_id));
-      }
-      impacted_events_ptr = nullptr;
-    }
-    return;
   }
 
   void check_sum_tree() const {
@@ -520,6 +538,29 @@ class DirectSumRejectionFreeEventSelector
     return;
   }
 
+  // Get the vector of impacted events. This should only be called after
+  // `set_impacted_events` has been called.
+  const std::vector<EventIDType> &get_impacted_events() const {
+    if (impacted_events_ptr == nullptr) {
+      throw std::runtime_error("Error: No impacted events set.");
+    }
+    return *impacted_events_ptr;
+  }
+
+  // Update the stored rates for impacted events
+  void update_impacted_event_rates() {
+    if (impacted_events_ptr != nullptr) {
+      for (const EventIDType &event_id : *impacted_events_ptr) {
+        this->update(event_id, this->calculate_rate(event_id));
+      }
+      // Update cumulative rate:
+      update_cumulative_rate();
+
+      impacted_events_ptr = nullptr;
+    }
+    return;
+  }
+
   // Return total event rate, for events in the state before `select_event` is
   // called
   double total_rate() const { return cumulative_rate.back(); }
@@ -571,20 +612,6 @@ class DirectSumRejectionFreeEventSelector
     // Should never reach this point
     throw std::runtime_error(
         "Error in query_tree: query value exceeds total rate.");
-  }
-
-  // Update the stored rates for impacted events
-  void update_impacted_event_rates() {
-    if (impacted_events_ptr != nullptr) {
-      for (const EventIDType &event_id : *impacted_events_ptr) {
-        this->update(event_id, this->calculate_rate(event_id));
-      }
-      // Update cumulative rate:
-      update_cumulative_rate();
-
-      impacted_events_ptr = nullptr;
-    }
-    return;
   }
 
   // Update the cumulative rate list
